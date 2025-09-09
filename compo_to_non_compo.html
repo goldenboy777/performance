@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #box {
+      width: 100px;
+      height: 100px;
+      background-color: teal;
+      transition: all 1s ease;
+    }
+
+    .composited {
+      transform: translateZ(0); /* triggers GPU compositing */
+      opacity: 0.5;
+    }
+
+    .non-composited {
+      transform: none; /* removes GPU compositing */
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div id="box"></div>
+
+<script>
+  function runAnimation() {
+    const box = document.getElementById('box');
+
+    // Step 1: Add composited class
+    box.classList.add('composited');
+
+    // Step 2: After animation, revert to non-composited
+    setTimeout(() => {
+      box.classList.remove('composited');
+      box.classList.add('non-composited');
+    }, 1500);
+  }
+
+  // Run animation on page load
+  window.addEventListener('DOMContentLoaded', runAnimation);
+</script>
+
+</body>
+</html>
