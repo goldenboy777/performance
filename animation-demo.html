@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Composited to Non-Composited Animation Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .demo-container {
+            text-align: center;
+            color: white;
+        }
+
+        .status {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .animation-box {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border-radius: 10px;
+            margin: 50px auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Initial composited animation - uses transform (GPU accelerated) */
+        .composited {
+            animation: compositedMove 2s ease-in-out infinite alternate;
+            transform: translateZ(0); /* Force hardware acceleration */
+            will-change: transform, opacity;
+        }
+
+        @keyframes compositedMove {
+            0% {
+                transform: translateX(0) scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateX(200px) scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Non-composited animation - uses layout properties (main thread) */
+        .non-composited {
+            animation: nonCompositedMove 2s ease-in-out infinite alternate;
+            will-change: auto;
+        }
+
+        @keyframes nonCompositedMove {
+            0% {
+                left: 0px;
+                width: 100px;
+                height: 100px;
+                margin-left: 0px;
+            }
+            100% {
+                left: 200px;
+                width: 120px;
+                height: 120px;
+                margin-left: -10px;
+            }
+        }
+
+        .info {
+            max-width: 600px;
+            margin-top: 30px;
+            line-height: 1.6;
+        }
+
+        .phase-indicator {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+
+        .performance-note {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #feca57;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>Performance Animation Demo</h1>
+        
+        <div class="status">
+            <div class="phase-indicator" id="phase-indicator">
+                Phase: <span id="current-phase">Composited Animation</span>
+            </div>
+        </div>
+
+        <div class="animation-box composited" id="animationBox"></div>
+
+        <div class="info">
+            <p><strong>This demo shows the difference between composited and non-composited animations:</strong></p>
+            <ul style="text-align: left; display: inline-block;">
+                <li><strong>Composited (First 5 seconds):</strong> Uses `transform` and `opacity` - GPU accelerated, smooth performance</li>
+                <li><strong>Non-Composited (After 5 seconds):</strong> Uses `left`, `width`, `height` - Main thread, may cause jank</li>
+            </ul>
+            
+            <div class="performance-note">
+                <strong>Performance Tip:</strong> Composited animations (transform, opacity) are handled by the GPU and don't block the main thread. Non-composited animations (layout properties) require reflow/repaint and can cause performance issues.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animation starts automatically on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const animationBox = document.getElementById('animationBox');
+            const phaseIndicator = document.getElementById('current-phase');
+            
+            // Start with composited animation
+            console.log('Starting composited animation...');
+            
+            // Switch to non-composited animation after 5 seconds
+            setTimeout(function() {
+                console.log('Switching to non-composited animation...');
+                
+                // Remove composited class and add non-composited class
+                animationBox.classList.remove('composited');
+                animationBox.classList.add('non-composited');
+                
+                // Update status
+                phaseIndicator.textContent = 'Non-Composited Animation';
+                
+                // Optional: Switch back after another 5 seconds to show the difference
+                setTimeout(function() {
+                    console.log('Switching back to composited animation...');
+                    animationBox.classList.remove('non-composited');
+                    animationBox.classList.add('composited');
+                    phaseIndicator.textContent = 'Composited Animation (Cycled Back)';
+                }, 5000);
+                
+            }, 5000);
+        });
+
+        // Performance monitoring (if available)
+        if (window.performance && window.performance.mark) {
+            window.performance.mark('animation-start');
+            
+            setTimeout(function() {
+                window.performance.mark('animation-phase-switch');
+                window.performance.measure('composited-phase', 'animation-start', 'animation-phase-switch');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
